@@ -515,34 +515,97 @@ struct conditionNode* make_conditionNode() {
     return (struct conditionNode*) malloc(sizeof (struct conditionNode));
 }
 
+struct relopNode* make_relopNode() {
+    return (struct relopNode*) malloc(sizeof (struct relopNode));
+}
+
 /*--------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------
   PARSING AND BUILDING PARSE TREE
 ---------------------------------------------------------------------*/
+struct relopNode* relop() {
+    struct relopNode* relop;
+
+    ttype = getToken();
+
+    // Test for Rule 42 - 46
+    if ((ttype == GREATER) | (ttype == GTEQ) | (ttype == LESS) | (ttype == NOTEQUAL) | (ttype == LTEQ)) {
+        relop = make_relopNode();
+        relop->tag = ttype;
+        relop->op = (char *) malloc((tokenLength + 1) * sizeof (char);
+        strcpy(relop->op, token); 
+        return relop;
+    } else {
+        syntax_error("relop. GREATER, GTEQ, LESS, NOTEQUAL, or LTEQ expected", line_no);
+        exit(0);
+    }
+}
+
 struct primaryNode* primary() {
-    struct primaryNode* primar;
+    struct primaryNode* primary;
+
+    ttype = getToken();
+
+    // Test for Rules 39 - 41
+    if (ttype == ID) {
+        // Rule 39 Found (Assign primary ID)
+	primary->tag = ttype;
+        primary->id = (char *) malloc((tokenLength + 1) * sizeof (char));
+        strcpy(primary->id, token);
+	return primary;
+    } else if (ttype == NUM) {
+        // Rule 40 Found (Assign primary NUM)
+        primary->tag = ttype;
+        primary->ival = atoi(token);
+	return primary;
+    } else if (ttype == REALNUM) {
+        // Rule 41 Found (Assign primary REALNUM)
+        primary->tag = ttype;
+        primary->fval = atof(token);
+	return primary;
+    } else {
+        syntax_error("primary. ID, NUM, or REALNUM expected", line_no);
+        exit(0);
+    }
 }
 
 struct conditionNode* condition() {
-/*
     struct conditionNode* cond;
 
     ttype = getToken();
 
-    if (ttype == ID) {
-        ttype = getToken(); 
+    if ((ttype == ID) | (ttype == NUM) | (ttype == REALNUM)) {
+        switch (ttype) {
+            case ID:
+                ungetToken();
+                cond = make_conditionNode();
+                cond->left_operad = make_primaryNode();
+                cond->left_operad = primary();                
 
-	if (ttype == LPAREN) {
-	    ungetToken();
-            cond = make_conditionNode();
-            cond->left_operad =   
-	} 
+                ttype = getToken();
+
+                // Test for Rule 37 or Rule 38
+                if (ttype == LPAREN) {
+                    ungetToken();
+                    cond->right_operad = NULL;
+                    return cond;
+                } else {
+                    ungetToken();
+                    cond->relop = relop();
+                    cond->right_operad = primary();
+                    return cond;
+                } 
+                break;
+            case NUM:
+                break;
+            case REALNUM:
+                break;
+        }
     } else {
-        syntax_error("condition. primary expected", line_no);
-        exit(0); 
+        syntax_error("condition. ID, NUM, or REALNUM expected", line_no);
+        exit(0);
     }
-*/
 }
 
 struct exprNode* factor() {
