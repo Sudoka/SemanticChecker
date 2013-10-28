@@ -1,0 +1,9 @@
+VAR
+i : INT ;
+j : STRING ;
+m , i , k : INT ;
+{
+m = 10 ; 
+}
+
+SUCCESSFULLY PARSED INPUT!

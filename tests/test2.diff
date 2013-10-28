@@ -1,0 +1,13 @@
+1,7c1,2
+< VAR
+< a : INT ;
+< b : REAL ;
+< {
+< a = 1 ; 
+< b = 2.0000 ; 
+< }
+---
+> INT : a #
+> REAL : b #
+9d3
+< SUCCESSFULLY PARSED INPUT!

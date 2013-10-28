@@ -1,0 +1,10 @@
+TYPE
+at : bt ;
+ct , dt , et , at : INT ;
+VAR
+a : at ;
+{
+x = 10 ; 
+}
+
+SUCCESSFULLY PARSED INPUT!

@@ -1,0 +1,13 @@
+1,8c1
+< TYPE
+< at : bt ;
+< ct , dt , et , at : INT ;
+< VAR
+< a : at ;
+< {
+< x = 10 ; 
+< }
+---
+> ERROR CODE 0
+10d2
+< SUCCESSFULLY PARSED INPUT!

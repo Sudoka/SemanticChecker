@@ -1,0 +1,11 @@
+1,6c1
+< VAR
+< a : INT ;
+< b : REAL ;
+< {
+< a = b ; 
+< }
+---
+> ERROR CODE 3
+8d2
+< SUCCESSFULLY PARSED INPUT!

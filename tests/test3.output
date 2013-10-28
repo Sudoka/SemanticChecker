@@ -1,0 +1,8 @@
+VAR
+a : INT ;
+b : REAL ;
+{
+a = b ; 
+}
+
+SUCCESSFULLY PARSED INPUT!

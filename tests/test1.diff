@@ -1,0 +1,8 @@
+1,3c1
+< {
+< a = b ; 
+< }
+---
+> a : b #
+5d2
+< SUCCESSFULLY PARSED INPUT!

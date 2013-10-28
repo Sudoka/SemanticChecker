@@ -1,0 +1,6 @@
+1c1,3
+< Syntax error while parsing body. RBRACE expected line 2
+---
+> INT : b #
+> BOOLEAN : a #
+> 

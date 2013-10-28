@@ -1,0 +1,12 @@
+1,7c1
+< TYPE
+< myint : INT ;
+< VAR
+< myint : INT ;
+< {
+< x = 0.0000 ; 
+< }
+---
+> ERROR CODE 1
+9d2
+< SUCCESSFULLY PARSED INPUT!

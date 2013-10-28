@@ -25,6 +25,6 @@ done
 
 echo $count;
 
-rm tests/*.output
-rm tests/*.diff
+#rm tests/*.output
+#rm tests/*.diff
 
