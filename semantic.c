@@ -7,9 +7,12 @@ Note: the code in this file is not to be shared with anyone or posted online.
 #include <stdlib.h>
 #include <string.h>
 #include "syntax.h"
+#include "semantic.h"
 
 #define TRUE 1
 #define FALSE 0
+
+#define DEBUG 1
 
 //----------------------------- token types ------------------------------
 #define KEYWORDS 14
@@ -328,7 +331,7 @@ void print_decl(struct declNode* dec) {
     if (dec->type_decl_section != NULL) {
         print_type_decl_section(dec->type_decl_section);
     }
-   et nu:
+
     if (dec->var_decl_section != NULL) {
         print_var_decl_section(dec->var_decl_section);
     }
@@ -409,7 +412,7 @@ void print_assign_stmt(struct assign_stmtNode* assign_stmt) {
 }
 
 void print_while_stmt(struct while_stmtNode* while_stmt) {
-    printf("WHILE"); 
+    printf("WHILE\n"); 
 }
 
 void print_stmt(struct stmtNode* stmt) {
@@ -515,33 +518,11 @@ struct conditionNode* make_conditionNode() {
     return (struct conditionNode*) malloc(sizeof (struct conditionNode));
 }
 
-struct relopNode* make_relopNode() {
-    return (struct relopNode*) malloc(sizeof (struct relopNode));
-}
-
 /*--------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------
   PARSING AND BUILDING PARSE TREE
 ---------------------------------------------------------------------*/
-struct relopNode* relop() {
-    struct relopNode* relop;
-
-    ttype = getToken();
-
-    // Test for Rule 42 - 46
-    if ((ttype == GREATER) | (ttype == GTEQ) | (ttype == LESS) | (ttype == NOTEQUAL) | (ttype == LTEQ)) {
-        relop = make_relopNode();
-        relop->tag = ttype;
-        relop->op = (char *) malloc((tokenLength + 1) * sizeof (char);
-        strcpy(relop->op, token); 
-        return relop;
-    } else {
-        syntax_error("relop. GREATER, GTEQ, LESS, NOTEQUAL, or LTEQ expected", line_no);
-        exit(0);
-    }
-}
-
 struct primaryNode* primary() {
     struct primaryNode* primary;
 
@@ -550,17 +531,20 @@ struct primaryNode* primary() {
     // Test for Rules 39 - 41
     if (ttype == ID) {
         // Rule 39 Found (Assign primary ID)
+        primary = make_primaryNode();
 	primary->tag = ttype;
         primary->id = (char *) malloc((tokenLength + 1) * sizeof (char));
         strcpy(primary->id, token);
 	return primary;
     } else if (ttype == NUM) {
         // Rule 40 Found (Assign primary NUM)
+        primary = make_primaryNode();
         primary->tag = ttype;
         primary->ival = atoi(token);
 	return primary;
     } else if (ttype == REALNUM) {
         // Rule 41 Found (Assign primary REALNUM)
+        primary = make_primaryNode();
         primary->tag = ttype;
         primary->fval = atof(token);
 	return primary;
@@ -578,28 +562,45 @@ struct conditionNode* condition() {
     if ((ttype == ID) | (ttype == NUM) | (ttype == REALNUM)) {
         switch (ttype) {
             case ID:
+                // Rule 37 or 39 must apply
                 ungetToken();
                 cond = make_conditionNode();
-                cond->left_operad = make_primaryNode();
-                cond->left_operad = primary();                
+                cond->left_operand = primary();                
 
                 ttype = getToken();
 
                 // Test for Rule 37 or Rule 38
-                if (ttype == LPAREN) {
+                if (ttype == LBRACE) {
                     ungetToken();
-                    cond->right_operad = NULL;
+                    cond->right_operand = NULL;
+                    return cond;
+                } else if ((ttype == GREATER) | (ttype == GTEQ) | (ttype == LESS) | (ttype == NOTEQUAL) | (ttype == LTEQ)) {
+                    cond->relop = ttype;
+                    cond->right_operand = primary();
                     return cond;
                 } else {
-                    ungetToken();
-                    cond->relop = relop();
-                    cond->right_operad = primary();
-                    return cond;
+                    syntax_error("condition. GREATER, GTEQ, LESS, NOTEQUAL, LTEQ or LBRACE expected", line_no);
+                    exit(0);
                 } 
                 break;
             case NUM:
-                break;
             case REALNUM:
+                // Rule 38 must apply
+                ungetToken();
+                cond = make_conditionNode();
+                cond->left_operand = primary();
+
+                ttype = getToken();
+
+                // Check for Rule 42 - 46 (relop)
+                if ((ttype == GREATER) | (ttype == GTEQ) | (ttype == LESS) | (ttype == NOTEQUAL) | (ttype == LTEQ)) {
+                    cond->relop = ttype;
+                    cond->right_operand = primary();
+                    return cond;
+                } else {
+                    syntax_error("condition. GREATER, GTEQ, LESS, NOTEQUAL, LTEQ expected", line_no);
+                    exit(0);
+                }   
                 break;
         }
     } else {
@@ -751,6 +752,7 @@ struct while_stmtNode* while_stmt() {
 
     ttype = getToken();
 
+    // Test for Rule 25
     if (ttype == WHILE) {
         whileStmt = make_while_stmtNode();
         whileStmt->condition = condition();
@@ -786,6 +788,7 @@ struct stmtNode* stmt() {
         ungetToken();
         stm->while_stmt = while_stmt();
         stm->stmtType = WHILE;
+        return stm;
     } else {
         // syntax error 
         syntax_error("stmt. ID or WHILE expected", line_no);
@@ -804,7 +807,7 @@ struct stmt_listNode* stmt_list() {
         stmtList->stmt = stmt();
         ttype = getToken();
         
-        if (ttype == ID) {
+        if ((ttype == ID) | (ttype == WHILE)) {
             ungetToken();
             stmtList->stmt_list = stmt_list();
             return stmtList;
@@ -818,7 +821,6 @@ struct stmt_listNode* stmt_list() {
         syntax_error("stmt_list. ID or WHILE expected", line_no);
         exit(0);
     }
-
 }
 
 struct bodyNode* body() {
@@ -829,8 +831,9 @@ struct bodyNode* body() {
     if (ttype == LBRACE) {
         bod = make_bodyNode();
         bod->stmt_list = stmt_list();
+
         ttype = getToken();
-        
+
         if (ttype == RBRACE) {
             return bod;
         } else {
@@ -998,7 +1001,8 @@ struct var_decl_sectionNode* var_decl_section() {
 
     ttype = getToken();
     
-    if (ttype == VAR) { // no need to ungetToken() 
+    if (ttype == VAR) {
+        // no need to ungetToken() 
         varDeclSection->var_decl_list = var_decl_list();
         return varDeclSection;
     } else {
@@ -1033,7 +1037,8 @@ struct declNode* decl() {
         dec->type_decl_section = type_decl_section();
         ttype = getToken();
         
-        if (ttype == VAR) { // type_decl_list is epsilon
+        if (ttype == VAR) {
+            // type_decl_list is epsilon
             // or type_decl already parsed and the 
             // next token is checked
             ungetToken();
@@ -1046,7 +1051,8 @@ struct declNode* decl() {
     } else {
         dec->type_decl_section = NULL;
         
-        if (ttype == VAR) { // type_decl_list is epsilon
+        if (ttype == VAR) {
+            // type_decl_list is epsilon
             // or type_decl already parsed and the 
             // next token is checked
             ungetToken();
@@ -1086,7 +1092,7 @@ struct programNode* program() {
 // Display Semantic Error //
 //------------------------//
 void print_error(int error) {
-    printf("ERROR CODE %s", error);
+    printf("ERROR CODE %d", error);
 }
 
 //----------------------------------------------------------//

@@ -100,11 +100,6 @@ struct primaryNode {
     char* id;
 };
 
-struct relopNode {
-    int tag; // GREATER, GTEQ, LESS, NOTEQUAL, LTEQ
-    char* op;
-};
-
 /*------------------------------------------------------------------------
   PARSE TREE FUNCTIONS
 --------------------------------------------------------------------------*/
@@ -127,7 +122,6 @@ struct type_nameNode* make_type_nameNode();
 struct exprNode* make_exprNode();
 struct primaryNode* make_primaryNode();
 struct conditionNode* make_conditionNode();
-struct relopNode* make_relopNode();
 
 void print_decl(struct declNode* dec);
 void print_body(struct bodyNode* body);
@@ -172,4 +166,3 @@ struct exprNode* term();
 struct exprNode* factor();
 struct conditionNode* condition();
 struct primaryNode* primary();
-struct relopNode* relop();
