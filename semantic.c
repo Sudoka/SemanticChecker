@@ -319,6 +319,14 @@ void syntax_error(char* NT, int line_no) {
     printf("Syntax error while parsing %s line %d\n", NT, line_no);
 }
 
+//------------------------//
+// Display Semantic Error //
+//------------------------//
+void semantic_error(int error) {
+    printf("ERROR CODE %d", error);
+}
+
+
 /*--------------------------------------------------------------------
   PRINTING PARSE TREE
 ---------------------------------------------------------------------*/
@@ -1093,56 +1101,6 @@ struct programNode* program() {
 //------------------------//
 void print_error(int error) {
     printf("ERROR CODE %d", error);
-}
-
-//----------------------------------------------------------//
-// type_section_check Method                                //
-//                                                          //
-// Checks the semantics for the type seciton of the program //
-//----------------------------------------------------------//
-void type_section_check(struct type_decl_sectionNode* type_decl_section) {
-    
-}
-
-//---------------------------------------------------------//
-// var_section_check Method                                //
-//                                                         //
-// Checks the semantics for the var section of the program //
-//---------------------------------------------------------//
-void var_section_check(struct var_decl_sectionNode* var_decl_section) {
-
-}
-
-//----------------------------------------------------------//
-// body_check Method                                        //
-//                                                          //
-// Checks the semantics for the body section of the program //
-//----------------------------------------------------------//
-void body_check(struct bodyNode* body) {
-
-}
-
-//-------------------//
-// Semantic Analyzer //
-//-------------------//
-void semantic_analyzer(struct programNode* program) {
-    // Test to see if Declaration Section is provided
-    if (program->decl != NULL) {
-        // Test if Type Declaration Section in provided
-        if (program->decl->type_decl_section != NULL) {
-            type_section_check(program->decl->type_decl_section);
-        }
-        
-        if (program->decl->var_decl_section != NULL) {
-            var_section_check(program->decl->var_decl_section);
-        }
-    }
-
-    if (program->body != NULL) {
-        body_check(program->body);
-    }
-
-    return;
 }
 
 // COMMON mistakes:

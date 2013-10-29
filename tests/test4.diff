@@ -1,6 +1,9 @@
-1c1,3
-< Syntax error while parsing body. RBRACE expected line 2
+1,3c1,2
+< {
+< WHILE
+< }
 ---
 > INT : b #
 > BOOLEAN : a #
-> 
+5d3
+< SUCCESSFULLY PARSED INPUT!
