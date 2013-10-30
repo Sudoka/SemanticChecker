@@ -6,6 +6,7 @@
       </df>
       <in>semantic.c</in>
       <in>syntax.h</in>
+      <in>typecheck.h</in>
     </df>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>

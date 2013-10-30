@@ -321,8 +321,7 @@ void syntax_error(char* NT, int line_no) {
 //------------------------//
 // Display Semantic Error //
 //------------------------//
-
-void semantic_error(int error) {
+void print_error(int error) {
 	printf("ERROR CODE %d", error);
 }
 
@@ -449,6 +448,11 @@ void print_expression_prefix(struct exprNode* expr) {
 void print_condition(struct conditionNode* cond) {
 
 }
+
+//----------------------------------//
+// Semantic Type-Checking Functions //
+//----------------------------------//
+
 
 /*--------------------------------------------------------------------
   CREATING PARSE TREE NODE
@@ -1093,13 +1097,6 @@ struct programNode* program() {
 		syntax_error("program. TYPE or VAR or LBRACE expected", line_no);
 		exit(0); // stop after first syntax error
 	}
-}
-
-//------------------------//
-// Display Semantic Error //
-//------------------------//
-void print_error(int error) {
-	printf("ERROR CODE %d", error);
 }
 
 // COMMON mistakes:
