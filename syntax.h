@@ -2,102 +2,102 @@
   PARSE TREE TYPES
 ------------------------------------------------------------*/
 struct programNode {
-    struct declNode* decl;
-    struct bodyNode* body;
+	struct declNode* decl;
+	struct bodyNode* body;
 };
 
 struct declNode {
-    // A NULL field means that the section is empty
-    struct type_decl_sectionNode* type_decl_section;
-    struct var_decl_sectionNode* var_decl_section;
+	// A NULL field means that the section is empty
+	struct type_decl_sectionNode* type_decl_section;
+	struct var_decl_sectionNode* var_decl_section;
 };
 
 struct type_decl_sectionNode {
-    struct type_decl_listNode* type_decl_list;
+	struct type_decl_listNode* type_decl_list;
 };
 
 struct var_decl_sectionNode {
-    struct var_decl_listNode* var_decl_list;
+	struct var_decl_listNode* var_decl_list;
 };
 
 struct type_decl_listNode {
-    struct type_declNode* type_decl;
-    struct type_decl_listNode* type_decl_list;
+	struct type_declNode* type_decl;
+	struct type_decl_listNode* type_decl_list;
 };
 
 struct var_decl_listNode {
-    struct var_declNode* var_decl;
-    struct var_decl_listNode* var_decl_list;
+	struct var_declNode* var_decl;
+	struct var_decl_listNode* var_decl_list;
 };
 
 struct type_declNode {
-    struct id_listNode* id_list;
-    struct type_nameNode* type_name;
+	struct id_listNode* id_list;
+	struct type_nameNode* type_name;
 };
 
 struct var_declNode {
-    struct id_listNode* id_list;
-    struct type_nameNode* type_name;
+	struct id_listNode* id_list;
+	struct type_nameNode* type_name;
 };
 
 struct type_nameNode {
-    int type; // INT, REAL, STRING, BOOLEAN, ID 
-    char* id; // actual string when type is ID
+	int type; // INT, REAL, STRING, BOOLEAN, ID 
+	char* id; // actual string when type is ID
 };
 
 struct id_listNode {
-    char* id;
-    struct id_listNode* id_list;
+	char* id;
+	struct id_listNode* id_list;
 };
 
 struct bodyNode {
-    struct stmt_listNode* stmt_list;
+	struct stmt_listNode* stmt_list;
 };
 
 struct stmt_listNode {
-    struct stmtNode* stmt;
-    struct stmt_listNode * stmt_list;
+	struct stmtNode* stmt;
+	struct stmt_listNode * stmt_list;
 };
 
 struct stmtNode {
-    int stmtType; // WHILE or ASSIGN
+	int stmtType; // WHILE or ASSIGN
 
-    union {
-        struct while_stmtNode* while_stmt;
-        struct assign_stmtNode* assign_stmt;
-    };
+	union {
+		struct while_stmtNode* while_stmt;
+		struct assign_stmtNode* assign_stmt;
+	};
 };
 
 struct conditionNode {
-    int relop;
-    struct primaryNode* left_operand;
-    struct primaryNode* right_operand;
+	int relop;
+	struct primaryNode* left_operand;
+	struct primaryNode* right_operand;
 };
 
 struct while_stmtNode {
-    struct conditionNode* condition;
-    struct bodyNode* body;
+	struct conditionNode* condition;
+	struct bodyNode* body;
 };
 
 struct assign_stmtNode {
-    char* id;
-    struct exprNode* expr;
+	char* id;
+	struct exprNode* expr;
 };
 
 struct exprNode {
-    int operator; // PLUS , MINUS, MULT, ... 
-    // or NO-OP
-    int tag; // PRIMARY or EXPR
-    struct primaryNode* primary;
-    struct exprNode* leftOperand;
-    struct exprNode* rightOperand;
+	int optr; // PLUS , MINUS, MULT, ... 
+	// or NO-OP
+	int tag; // PRIMARY or EXPR
+	struct primaryNode* primary;
+	struct exprNode* leftOperand;
+	struct exprNode* rightOperand;
 };
 
 struct primaryNode {
-    int tag; // NUM, REALNUM or ID
-    int ival;
-    float fval;
-    char* id;
+	int tag; // NUM, REALNUM or ID
+	int ival;
+	float fval;
+	char* id;
 };
 
 /*------------------------------------------------------------------------
