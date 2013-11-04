@@ -7,6 +7,7 @@ Note: the code in this file is not to be shared with anyone or posted online.
 #include <stdlib.h>
 #include <string.h>
 #include "syntax.h"
+#include "typecheck.h"
 
 #define TRUE 1
 #define FALSE 0
@@ -452,7 +453,13 @@ void print_condition(struct conditionNode* cond) {
 //----------------------------------//
 // Semantic Type-Checking Functions //
 //----------------------------------//
+int lookup_type(struct type_nameNode* typeDecl) {
 
+}
+
+int lookup_var(struct var_declNode* varDecl) {
+
+}
 
 /*--------------------------------------------------------------------
   CREATING PARSE TREE NODE
@@ -921,6 +928,7 @@ struct type_declNode* type_decl() {
 			ttype = getToken();
 
 			if (ttype == SEMICOLON) {
+				lookup_type(typeDecl);
 				return typeDecl;
 			} else {
 				syntax_error("type_decl. SEMICOLON expected", line_no);
@@ -947,6 +955,7 @@ struct var_declNode* var_decl() {
 			ttype = getToken();
 
 			if (ttype == SEMICOLON) {
+				lookup_var(varDecl);
 				return varDecl;
 			} else {
 				syntax_error("var_decl. SEMICOLON expected", line_no);
