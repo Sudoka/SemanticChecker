@@ -1,24 +1,44 @@
 #define IMPLICIT 0
 #define EXPLICIT 1
 
+#define TYPE_DECL 0
+#define VAR_DECL 1
+
+#define TYPE_NAME 0
+#define TYPE_ID 1
+#define VAR_ID 2
+
 #define MAX_SYMBOLS 1000
 
-int lastTypeNum = 13;
+//-----------------------------//
+// Semantic Counting Variables //
+//-----------------------------//
+int nextTypeNum = 14;
+int symbolCount = 0;
 
-struct type_symbol {
-	char* id;
-	int declType;
-	int typeNum;
-}
+struct symbol {
+	char* id; // String Token
+	int declType; // EXPLICIT or IMPLICIT
+	int typeNum; // Type Number for checking
+	int form; // TYPE_DECL or VAR_DECL
+};
 
-struct var_symbol {
-	char* id;
-	int declType;
-	int typeNum;
-}
+// Declare Array to Store Symbols
+struct symbol symbol_table[1000];
 
-struct type_symbol type_symbol_table[1000];
-struct var_symbol var_symbol_table[1000];
+//---------------------------//
+// Semantic Lookup Functions //
+//---------------------------//
+int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum);
 
-int lookup_type(struct type_declNode* typeDecl);
-int lookup_var(struct var_declNode* varDecl);
+void lookup_type(struct type_declNode* typeDecl);
+void lookup_var(struct var_declNode* varDecl);
+void lookup_stmt(struct stmtNode* stmt);
+void lookup_cond(struct conditionNode* cond);
+
+void semantic_error(int error);
+
+//--------------------------//
+// Semantic Print Functions //
+//--------------------------//
+void print_symbol_table();

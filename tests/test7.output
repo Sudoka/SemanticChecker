@@ -1,9 +1,1 @@
-TYPE
-myint : INT ;
-VAR
-myint : INT ;
-{
-x = 0.0000 ; 
-}
-
-SUCCESSFULLY PARSED INPUT!
+ERROR CODE 1

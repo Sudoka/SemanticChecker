@@ -322,8 +322,8 @@ void syntax_error(char* NT, int line_no) {
 //------------------------//
 // Display Semantic Error //
 //------------------------//
-void print_error(int error) {
-	printf("ERROR CODE %d", error);
+void semantic_error(int error) {
+	printf("ERROR CODE %d\n", error);
 }
 
 /*--------------------------------------------------------------------
@@ -418,6 +418,9 @@ void print_assign_stmt(struct assign_stmtNode* assign_stmt) {
 	printf("; \n");
 }
 
+//-----------------------//
+// Print While Statement //
+//-----------------------//
 void print_while_stmt(struct while_stmtNode* while_stmt) {
 	printf("WHILE\n");
 }
@@ -446,6 +449,9 @@ void print_expression_prefix(struct exprNode* expr) {
 	}
 }
 
+//---------------------------//
+// Print Condition Statement //
+//---------------------------//
 void print_condition(struct conditionNode* cond) {
 
 }
@@ -453,11 +459,211 @@ void print_condition(struct conditionNode* cond) {
 //----------------------------------//
 // Semantic Type-Checking Functions //
 //----------------------------------//
-int lookup_type(struct type_nameNode* typeDecl) {
+
+//----------------------------------------------//
+// print_symbol_table Method			//
+//						//
+// Displays the Symbol Table for Debugging	//
+//----------------------------------------------//
+void print_symbol_table() {
+	int i;
+
+	printf("SYMBOL\tTYPE\t\tNUM\tFORM\n");
+	printf("======\t====\t\t===\t====\n");
+
+	for (i = 0; i < symbolCount; i++) {
+		char* declType = (symbol_table[i].declType) ? "IMPLICIT":"EXPLICIT";
+		char* form = (symbol_table[i].form) ? "TYPE":"VAR";
+
+		printf("%s\t%s\t%d\t%s\n", symbol_table[i].id, declType, symbol_table[i].typeNum, form);
+	}
+
+	return;
+}
+
+//------------------------------------------------------//
+// insert_explicit_types Method				//
+//							//
+// Static function used to create Built-In types.	//
+//------------------------------------------------------//
+static void insert_explicit_types() {
+	struct symbol integer, real, str, boolean;
+
+	// Declare INT Built-In Type
+	integer.id = "INT";
+	integer.declType = EXPLICIT;
+	integer.typeNum = 10;
+	integer.form = TYPE_DECL;
+	symbol_table[symbolCount] = integer;
+	symbolCount++;
+
+	// Declare REAL Built-In Type
+	real.id = "REAL";
+	real.declType = EXPLICIT;
+	real.typeNum = 11;
+	real.form = TYPE_DECL;
+	symbol_table[symbolCount] = real;
+	symbolCount++;
+
+	// Declare STRING Built-In Type
+	str.id = "STRING";
+	str.declType = EXPLICIT;
+	str.typeNum = 12;
+	str.form = TYPE_DECL;
+	symbol_table[symbolCount] = str;
+	symbolCount++;
+
+	// Declare BOOLEAN Built-In Type
+	boolean.id = "BOOLEAN";
+	boolean.declType = EXPLICIT;
+	boolean.typeNum = 13;
+	boolean.form = TYPE_DECL;
+	symbol_table[symbolCount] = boolean;
+	symbolCount++;
+	
+	return;
+}
+
+//----------------------------------------------------------------------//
+// lookup_symbol_table Method						//
+//									//
+// Loops through Symbol Table to find matching ID.			//
+// If Not Found insert into table and return Type Number.		//
+// Else if in Type Declaration or Variable Declaration ERROR Found.	//
+//----------------------------------------------------------------------//
+int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum) {
+	int i;
+	int found = FALSE;
+
+	// Loop through Symbol Table Return Type Number
+	for (i = 0; i < symbolCount; i++) {
+		if (strcmp(id, symbol_table[i].id) == 0) {
+			// ID found in Symbol Table
+			found = TRUE;
+
+			switch (code) {
+				case TYPE_NAME:
+					// Type Name Search
+					// Return Type Number
+					return symbol_table[i].typeNum;
+				case TYPE_ID:
+					// Type Declaration ID List Search
+					// ID found while Error checking
+					// Create Semantic Error 0
+					semantic_error(0);
+					exit(0);
+				case VAR_ID:
+					// Var Declaration ID List Search
+					// ID found while Error checking
+					// Create Semantic Error 1 or 2
+					if (symbol_table[i].form == TYPE_DECL) {
+						// Type re-declared as Variable
+						semantic_error(1);
+					} else if (symbol_table[i].form == VAR_DECL) {
+						// Variable declared more than once
+						semantic_error(2);
+					} else {
+						// Should Never Reach Here
+						// Only will occur if Symbol not inserted correctly
+						printf("ERROR UNKNOWN SYMBOL FORM");	
+					}
+					exit(0);
+				default:
+					// Should Never Reach Here
+					// Only will occur if incorrect code given
+					printf("ERROR UNKNOWN CODE GIVEN");
+					break;
+			}
+		}
+	}
+
+	if (!found) {
+		// ID not found
+		struct symbol newSymbol;
+
+		// Assign Symbol Variables
+		newSymbol.id = id;
+		newSymbol.declType = declType;
+		newSymbol.form = form;
+		newSymbol.typeNum = typeNum;
+
+		// Insert into Symbol Table
+		symbol_table[symbolCount] = newSymbol;
+
+		// Increment Counters
+		nextTypeNum++;
+		symbolCount++;
+
+		// Return Type Number
+		return symbol_table[i].typeNum;
+	}
+}
+
+//----------------------------------------------------------------------//
+// lookup_type Method							//
+//									//
+// Type checking for Type Declarations. Looks up typeName, then		//
+// inserts into Symbol Table if needed. Looks up idList, then inserts	//
+// IDs into Symbol Table. Makes IDs Type Number same as typeName.	//
+//----------------------------------------------------------------------//
+void lookup_type(struct type_declNode* typeDecl) {
+	int typeNum;
+	struct id_listNode* id_listNode = typeDecl->id_list;
+
+	// Lookup Type Name
+	if (typeDecl->type_name->type == ID) {
+		// If Type Name is ID then lookup in Symbol Table
+		typeNum = lookup_symbol_table(typeDecl->type_name->id, IMPLICIT, TYPE_DECL, TYPE_NAME, nextTypeNum);
+	} else {
+		// Else it is a Built-In Type so assign to appropriate Type Number
+		typeNum = typeDecl->type_name->type;
+	}
+	
+	// Loop through IDs in ID List
+	while (id_listNode != NULL) {
+		lookup_symbol_table(id_listNode->id, EXPLICIT, TYPE_DECL, TYPE_ID, typeNum);	// Lookup ID in Symbol Table
+		id_listNode = id_listNode->id_list;	// Iterate to next node in ID List
+	}
+}
+
+//----------------------------------------------------------------------//
+// lookup_var Method							//
+//									//
+// Type checking for Variable Declarations. Looks up typeName, then	//
+// inserts into Symbol Table if needed. Looks up idList, then inserts	//
+// IDs into Symbol Table. Makes IDs Type Number same as typeName.	//
+//----------------------------------------------------------------------//
+void lookup_var(struct var_declNode* varDecl) {
+	int typeNum;
+	struct id_listNode* id_listNode = varDecl->id_list;
+
+	// Lookup Type Name
+	if (varDecl->type_name->type == ID) {
+		// If Type Name is ID then lookup in Symbol Table
+		typeNum = lookup_symbol_table(varDecl->type_name->id, IMPLICIT, TYPE_DECL, TYPE_NAME, nextTypeNum);
+	} else {
+		// Else it is a Built-In Type so assign to appropriate Type Number
+		typeNum = varDecl->type_name->type;
+	}
+
+	// Loop through IDs in ID List
+	while (id_listNode != NULL) {
+		lookup_symbol_table(id_listNode->id, EXPLICIT, VAR_DECL, VAR_ID, typeNum);	// Lookup ID in Symbol Table
+		id_listNode = id_listNode->id_list;	// Iterate to next node in ID List
+	}
+}
+
+// lookup_stmt Method
+//
+//
+void lookup_stmt(struct stmtNode* stmt) {
 
 }
 
-int lookup_var(struct var_declNode* varDecl) {
+// lookup_cond Method
+//
+//
+void lookup_cond(struct conditionNode* cond) {
 
 }
 
@@ -1113,7 +1319,9 @@ struct programNode* program() {
 //    *     not allocating space before strcpy
 main() {
 	struct programNode* parseTree;
+	insert_explicit_types();
 	parseTree = program();
-	print_parse_tree(parseTree);
-	printf("\nSUCCESSFULLY PARSED INPUT!\n");
+	if (DEBUG) print_parse_tree(parseTree);
+	if (DEBUG) printf("\nSUCCESSFULLY PARSED INPUT!\n\n");
+	if (DEBUG) print_symbol_table();
 }

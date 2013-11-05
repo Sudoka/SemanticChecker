@@ -1,10 +1,1 @@
-TYPE
-at : bt ;
-ct , dt , et , bt : STRING ;
-VAR
-a : at ;
-{
-x = 10 ; 
-}
-
-SUCCESSFULLY PARSED INPUT!
+ERROR CODE 0
