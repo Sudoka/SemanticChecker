@@ -7,6 +7,8 @@
 #define TYPE_NAME 0
 #define TYPE_ID 1
 #define VAR_ID 2
+#define COND_ID 3
+#define COND_PRI 4
 
 #define MAX_SYMBOLS 1000
 
@@ -33,10 +35,14 @@ int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum)
 
 void lookup_type(struct type_declNode* typeDecl);
 void lookup_var(struct var_declNode* varDecl);
-void lookup_stmt(struct stmtNode* stmt);
+void lookup_assign(struct assign_stmtNode* stmt);
 void lookup_cond(struct conditionNode* cond);
 
+//----------------------------//
+// Semantic Utility Functions //
+//----------------------------//
 void semantic_error(int error);
+void unify(int t1, int t2);
 
 //--------------------------//
 // Semantic Print Functions //

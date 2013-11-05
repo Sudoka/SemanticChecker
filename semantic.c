@@ -422,7 +422,9 @@ void print_assign_stmt(struct assign_stmtNode* assign_stmt) {
 // Print While Statement //
 //-----------------------//
 void print_while_stmt(struct while_stmtNode* while_stmt) {
-	printf("WHILE\n");
+	printf("WHILE ");
+	print_condition(while_stmt->condition);
+	print_body(while_stmt->body);
 }
 
 void print_stmt(struct stmtNode* stmt) {
@@ -449,11 +451,34 @@ void print_expression_prefix(struct exprNode* expr) {
 	}
 }
 
+void print_primary(struct primaryNode* primary) {
+	if (primary->tag == ID) {
+		printf("%s ", primary->id);
+	} else if (primary->tag == NUM) {
+		printf("%d ", primary->ival);
+	} else if (primary->tag == REALNUM) {
+		printf("%.4f ", primary->fval);
+	}
+	
+	return;
+}
+
 //---------------------------//
 // Print Condition Statement //
 //---------------------------//
 void print_condition(struct conditionNode* cond) {
-
+	if (cond->right_operand != NULL) {
+		printf("%s ", reserved[cond->relop]);
+		print_primary(cond->left_operand);
+		print_primary(cond->right_operand);	
+		printf("\n");
+	} else {
+		// Rule 37 Applies (cond -> ID)
+		// Print ID
+		printf("%s\n", cond->left_operand->id);
+	}
+	
+	return;
 }
 
 //----------------------------------//
@@ -472,8 +497,8 @@ void print_symbol_table() {
 	printf("======\t====\t\t===\t====\n");
 
 	for (i = 0; i < symbolCount; i++) {
-		char* declType = (symbol_table[i].declType) ? "IMPLICIT":"EXPLICIT";
-		char* form = (symbol_table[i].form) ? "TYPE":"VAR";
+		char* declType = (symbol_table[i].declType) ? "EXPLICIT":"IMPLICIT";
+		char* form = (symbol_table[i].form) ? "VAR":"TYPE";
 
 		printf("%s\t%s\t%d\t%s\n", symbol_table[i].id, declType, symbol_table[i].typeNum, form);
 	}
@@ -524,6 +549,31 @@ static void insert_explicit_types() {
 	return;
 }
 
+// unify Method
+//
+//
+void unify(int t1, int t2) {
+	if ((t1 < 14) & (t2 < 14)) {
+		// Type Mismatch
+		// Throw ERROR CODE 3
+		semantic_error(3);
+		exit(0);
+	} else {
+		int i;
+
+		// Loop through Symbols
+		for (i = 0; i < symbolCount; i++) {
+			// Check for Matching Type Number
+			if (symbol_table[i].typeNum == t2) {
+				// Assign Type Number for Symbol
+				symbol_table[i].typeNum = t1;
+			}
+		}
+	}
+
+	return;
+}
+
 //----------------------------------------------------------------------//
 // lookup_symbol_table Method						//
 //									//
@@ -568,6 +618,43 @@ int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum)
 						printf("ERROR UNKNOWN SYMBOL FORM");	
 					}
 					exit(0);
+				case COND_ID:
+					// Verify ID is not Type re-declaration
+					if (symbol_table[i].form == TYPE_DECL) {
+						// Type re-declared as Variable
+						// Throw ERROR CODE 1
+						semantic_error(1);
+						exit(0);
+					}
+
+					// Verify cond -> ID is of Type BOOLEAN
+					if (symbol_table[i].typeNum != BOOLEAN) {
+						if (symbol_table[i].typeNum < BOOLEAN) {
+							// Type Mismatch
+							// Throw ERROR CODE 3
+							semantic_error(3);
+							exit(0);
+						} else {
+							// Type Implicitly Declared Must be BOOLEAN
+							int tempTypeNum = symbol_table[i].typeNum;
+							symbol_table[i].typeNum = BOOLEAN;
+							return tempTypeNum;
+						}
+					}
+
+					break;
+				case COND_PRI:
+					// Primary Type ID found
+					// Verify ID is not Type re-declaration
+					// Return Type Number
+					if (symbol_table[i].form == TYPE_DECL) {
+						// Type re-decalred as Variable
+						// Throw ERROR CODE 1
+						semantic_error(1);
+						exit(0);
+					}
+
+					return symbol_table[i].typeNum;
 				default:
 					// Should Never Reach Here
 					// Only will occur if incorrect code given
@@ -577,6 +664,7 @@ int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum)
 		}
 	}
 
+	// Insert ID into Symbol Table if not found
 	if (!found) {
 		// ID not found
 		struct symbol newSymbol;
@@ -591,7 +679,10 @@ int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum)
 		symbol_table[symbolCount] = newSymbol;
 
 		// Increment Counters
-		nextTypeNum++;
+		if (code == TYPE_NAME) {
+			nextTypeNum++;
+		}
+
 		symbolCount++;
 
 		// Return Type Number
@@ -624,6 +715,8 @@ void lookup_type(struct type_declNode* typeDecl) {
 		lookup_symbol_table(id_listNode->id, EXPLICIT, TYPE_DECL, TYPE_ID, typeNum);	// Lookup ID in Symbol Table
 		id_listNode = id_listNode->id_list;	// Iterate to next node in ID List
 	}
+
+	return;
 }
 
 //----------------------------------------------------------------------//
@@ -651,20 +744,62 @@ void lookup_var(struct var_declNode* varDecl) {
 		lookup_symbol_table(id_listNode->id, EXPLICIT, VAR_DECL, VAR_ID, typeNum);	// Lookup ID in Symbol Table
 		id_listNode = id_listNode->id_list;	// Iterate to next node in ID List
 	}
+	
+	return;
 }
 
-// lookup_stmt Method
+// lookup_assign Method
 //
 //
-void lookup_stmt(struct stmtNode* stmt) {
-
+void lookup_assign(struct assign_stmtNode* stmt) {
+	return;
 }
 
-// lookup_cond Method
-//
-//
+//--------------------------------------------------------------//
+// lookup_cond Method						//
+//								//
+// Checks for Semantic Type Errors in Condition Statements.	//
+// Unify Type Numbers to the same if Rule 38 applies. Unify	//
+// Type Numbers to BOOLEAN if Rule 37 applies.			//
+//--------------------------------------------------------------//
 void lookup_cond(struct conditionNode* cond) {
+	int leftTypeNum, rightTypeNum;
 
+	if (cond->right_operand != NULL) {
+		// Rule 38 Applies (cond -> primary relop primary)
+
+		// Lookup Left Operand Primary Type
+		if (cond->left_operand->tag == ID) {
+			leftTypeNum = lookup_symbol_table(cond->left_operand->id, IMPLICIT, VAR_DECL, COND_PRI, nextTypeNum); 
+		} else if (cond->left_operand->tag == NUM) {
+			leftTypeNum = INT;
+		} else if (cond->left_operand->tag == REALNUM) {
+			leftTypeNum = REAL;
+		}
+
+		// Lookup Right Operand Primary Type
+		if (cond->right_operand->tag == ID) {
+			rightTypeNum = lookup_symbol_table(cond->right_operand->id, IMPLICIT, VAR_DECL, COND_PRI, nextTypeNum); 
+		} else if (cond->right_operand->tag == NUM) {
+			rightTypeNum = INT;
+		} else if (cond->right_operand->tag == REALNUM) {
+			rightTypeNum = REALNUM;
+		}
+
+		// Unify Type Numbers
+		unify(leftTypeNum, rightTypeNum);
+	} else {
+		// Rule 37 Applies (cond -> ID)
+		leftTypeNum = lookup_symbol_table(cond->left_operand->id, IMPLICIT, VAR_DECL, COND_ID, BOOLEAN);
+	
+		if (leftTypeNum != BOOLEAN) {
+			// Variable declared as User-defined Type
+			// Unify Type Numbers
+			unify(BOOLEAN, leftTypeNum);
+		}
+	}
+	
+	return;
 }
 
 /*--------------------------------------------------------------------
@@ -797,10 +932,12 @@ struct conditionNode* condition() {
 				if (ttype == LBRACE) {
 					ungetToken();
 					cond->right_operand = NULL;
+					lookup_cond(cond);
 					return cond;
 				} else if ((ttype == GREATER) | (ttype == GTEQ) | (ttype == LESS) | (ttype == NOTEQUAL) | (ttype == LTEQ)) {
 					cond->relop = ttype;
 					cond->right_operand = primary();
+					lookup_cond(cond);
 					return cond;
 				} else {
 					syntax_error("condition. GREATER, GTEQ, LESS, NOTEQUAL, LTEQ or LBRACE expected", line_no);
@@ -820,6 +957,7 @@ struct conditionNode* condition() {
 				if ((ttype == GREATER) | (ttype == GTEQ) | (ttype == LESS) | (ttype == NOTEQUAL) | (ttype == LTEQ)) {
 					cond->relop = ttype;
 					cond->right_operand = primary();
+					lookup_cond(cond);
 					return cond;
 				} else {
 					syntax_error("condition. GREATER, GTEQ, LESS, NOTEQUAL, LTEQ expected", line_no);
@@ -960,6 +1098,7 @@ struct assign_stmtNode* assign_stmt() {
 
 		if (ttype == EQUAL) {
 			assignStmt->expr = expr();
+			lookup_assign(assignStmt); // Check for Semantic Errors
 			return assignStmt;
 		} else {
 			syntax_error("assign_stmt. EQUAL expected", line_no);
