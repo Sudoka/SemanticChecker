@@ -6,13 +6,14 @@ Note: the code in this file is not to be shared with anyone or posted online.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "syntax.h"
 #include "typecheck.h"
 
 #define TRUE 1
 #define FALSE 0
 
-#define DEBUG 1
+#define DEBUG 1 
 
 //----------------------------- token types ------------------------------
 #define KEYWORDS 14
@@ -552,9 +553,12 @@ static void insert_explicit_types() {
 	return;
 }
 
-// unify Method
-//
-//
+//--------------------------------------------------------------//
+// unify Method							//
+//								//
+// Modifies the Type Numbers of Symbols in the Table to match	//
+// the number given in parameter t1. Checks for Type Mismatch	//
+//--------------------------------------------------------------//
 int unify(int t1, int t2) {
 	if (t1 == t2) {
 		return t1;
@@ -767,9 +771,13 @@ void lookup_var(struct var_declNode* varDecl) {
 	return;
 }
 
-// lookup_expr Method
-//
-//
+//----------------------------------------------------------------------//
+// lookup_expr Method							//
+//									//
+// Type checking for Expressions as part of the assignment statment.	//
+// Looks up Primary Type Numbers and unifies the Type Numbers for non-	//
+// matching types. Throw error when attempting to modify Built-In Types	//
+//----------------------------------------------------------------------//
 int lookup_expr(struct exprNode* expr) {
 	int leftTypeNum, rightTypeNum;
 
@@ -799,9 +807,12 @@ int lookup_expr(struct exprNode* expr) {
 	}
 }
 
-// lookup_assign Method
-//
-//
+//------------------------------------------------------//
+// lookup_assign Method					//
+//							//
+// Type checking for assignment statements. Unify the	//
+// Type Numbers of the expression to the ID.		//
+//------------------------------------------------------//
 void lookup_assign(struct assign_stmtNode* stmt) {
 	int idTypeNum, exprTypeNum;
 

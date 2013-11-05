@@ -1,22 +1,4 @@
-1,7c1,2
-< VAR
-< a : INT ;
-< b : REAL ;
-< {
-< a = 1 ; 
-< b = 2.0000 ; 
-< }
----
+0a1,3
 > INT : a #
 > REAL : b #
-9,18d3
-< SUCCESSFULLY PARSED INPUT!
-< 
-< 	SYMBOL	TYPE		NUM	FORM
-< 	======	====		===	====
-< 	INT	EXPLICIT	10	TYPE
-< 	REAL	EXPLICIT	11	TYPE
-< 	STRING	EXPLICIT	12	TYPE
-< 	BOOLEAN	EXPLICIT	13	TYPE
-< 	a	EXPLICIT	10	VAR
-< 	b	EXPLICIT	11	VAR
+> 

@@ -27,7 +27,7 @@ struct symbol {
 };
 
 // Declare Array to Store Symbols
-struct symbol symbol_table[1000];
+struct symbol symbol_table[MAX_SYMBOLS];
 
 //---------------------------//
 // Semantic Lookup Functions //
