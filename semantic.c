@@ -451,6 +451,9 @@ void print_expression_prefix(struct exprNode* expr) {
 	}
 }
 
+//-------------------------//
+// Print Primary Statement //
+//-------------------------//
 void print_primary(struct primaryNode* primary) {
 	if (primary->tag == ID) {
 		printf("%s ", primary->id);
@@ -493,14 +496,14 @@ void print_condition(struct conditionNode* cond) {
 void print_symbol_table() {
 	int i;
 
-	printf("SYMBOL\tTYPE\t\tNUM\tFORM\n");
-	printf("======\t====\t\t===\t====\n");
+	printf("\tSYMBOL\tTYPE\t\tNUM\tFORM\n");
+	printf("\t======\t====\t\t===\t====\n");
 
 	for (i = 0; i < symbolCount; i++) {
 		char* declType = (symbol_table[i].declType) ? "EXPLICIT":"IMPLICIT";
 		char* form = (symbol_table[i].form) ? "VAR":"TYPE";
 
-		printf("%s\t%s\t%d\t%s\n", symbol_table[i].id, declType, symbol_table[i].typeNum, form);
+		printf("\t%s\t%s\t%d\t%s\n", symbol_table[i].id, declType, symbol_table[i].typeNum, form);
 	}
 
 	return;
@@ -552,7 +555,11 @@ static void insert_explicit_types() {
 // unify Method
 //
 //
-void unify(int t1, int t2) {
+int unify(int t1, int t2) {
+	if (t1 == t2) {
+		return t1;
+	}
+
 	if ((t1 < 14) & (t2 < 14)) {
 		// Type Mismatch
 		// Throw ERROR CODE 3
@@ -571,7 +578,7 @@ void unify(int t1, int t2) {
 		}
 	}
 
-	return;
+	return t1;
 }
 
 //----------------------------------------------------------------------//
@@ -648,7 +655,19 @@ int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum)
 					// Verify ID is not Type re-declaration
 					// Return Type Number
 					if (symbol_table[i].form == TYPE_DECL) {
-						// Type re-decalred as Variable
+						// Type re-declared as Variable
+						// Throw ERROR CODE 1
+						semantic_error(1);
+						exit(0);
+					}
+
+					return symbol_table[i].typeNum;
+				case STMT:
+					// ID found
+					// Verify ID is not Type re-declaration
+					// Return Type Number
+					if (symbol_table[i].form == TYPE_DECL) {
+						// Type re-declared as Variable
 						// Throw ERROR CODE 1
 						semantic_error(1);
 						exit(0);
@@ -679,7 +698,7 @@ int lookup_symbol_table(char* id, int declType, int form, int code, int typeNum)
 		symbol_table[symbolCount] = newSymbol;
 
 		// Increment Counters
-		if (code == TYPE_NAME) {
+		if ((code == TYPE_NAME) | (code == COND_PRI) | (code == STMT)) {
 			nextTypeNum++;
 		}
 
@@ -748,10 +767,49 @@ void lookup_var(struct var_declNode* varDecl) {
 	return;
 }
 
+// lookup_expr Method
+//
+//
+int lookup_expr(struct exprNode* expr) {
+	int leftTypeNum, rightTypeNum;
+
+	// Check for Primary Node
+	if (expr->tag != PRIMARY) {
+		leftTypeNum = lookup_expr(expr->leftOperand);
+		rightTypeNum = lookup_expr(expr->rightOperand);
+
+		// Unify Types of Expression
+		// Return Type Number result of unify
+		return unify(rightTypeNum, leftTypeNum);
+	} else {
+		// If Primary Node Return Type Number
+		if (expr->primary->tag == ID) {
+			// Rule 39 (primary -> ID)
+			// Lookup Type Number and return
+			return lookup_symbol_table(expr->primary->id, IMPLICIT, VAR_DECL, STMT, nextTypeNum);
+		} else if (expr->primary->tag == NUM) {
+			// Rule 40 (primary -> NUM)
+			// Return INT (10)
+			return INT;
+		} else if (expr->primary->tag == REALNUM) {
+			// Rule 41 (primary -> REALNUM)
+			// Return REAL (11)
+			return REAL;
+		}
+	}
+}
+
 // lookup_assign Method
 //
 //
 void lookup_assign(struct assign_stmtNode* stmt) {
+	int idTypeNum, exprTypeNum;
+
+	idTypeNum = lookup_symbol_table(stmt->id, IMPLICIT, VAR_DECL, STMT, nextTypeNum);
+	exprTypeNum = lookup_expr(stmt->expr);
+
+	unify(exprTypeNum, idTypeNum);
+
 	return;
 }
 
@@ -765,6 +823,7 @@ void lookup_assign(struct assign_stmtNode* stmt) {
 void lookup_cond(struct conditionNode* cond) {
 	int leftTypeNum, rightTypeNum;
 
+	// Check for Condition Rule
 	if (cond->right_operand != NULL) {
 		// Rule 38 Applies (cond -> primary relop primary)
 
@@ -792,11 +851,9 @@ void lookup_cond(struct conditionNode* cond) {
 		// Rule 37 Applies (cond -> ID)
 		leftTypeNum = lookup_symbol_table(cond->left_operand->id, IMPLICIT, VAR_DECL, COND_ID, BOOLEAN);
 	
-		if (leftTypeNum != BOOLEAN) {
-			// Variable declared as User-defined Type
-			// Unify Type Numbers
-			unify(BOOLEAN, leftTypeNum);
-		}
+		// Variable declared as User-defined Type
+		// Unify Type Numbers
+		unify(BOOLEAN, leftTypeNum);
 	}
 	
 	return;
