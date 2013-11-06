@@ -2,18 +2,18 @@
 Note: the code in this file is not to be shared with anyone or posted online.
 (c) Rida Bazzi, 2013
 ----------------------------------------------------------------------------*/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "syntax.h"
-#include "typecheck.h"
 
+#define DEBUG 0
 #define TRUE 1
 #define FALSE 0
 
-#define DEBUG 1 
+#include "syntax.h"
+#include "typecheck.h"
+#include "printlist.h"
 
 //----------------------------- token types ------------------------------
 #define KEYWORDS 14
@@ -505,6 +505,92 @@ void print_symbol_table() {
 		char* form = (symbol_table[i].form) ? "VAR":"TYPE";
 
 		printf("\t%s\t%s\t%d\t%s\n", symbol_table[i].id, declType, symbol_table[i].typeNum, form);
+	}
+
+	return;
+}
+
+// defined_type Method
+//
+//
+bool defined_type(int index) {
+	return (strcmp(types[index].id, "") == 0) ? false:true;
+}
+
+//--------------------------------------------------------------//
+// print_types Method						//
+//								//
+// Creates the Linked Lists of Types defined in the program.	//
+// Defines the Type Names and adds Symbols to List.		//
+//--------------------------------------------------------------//
+void print_types() {
+	int i, index;
+
+	// Initialize Types
+	for (i = 0; i < (nextTypeNum - 10); i++) {
+		types[i].id = "";
+		types[i].head = NULL;
+		types[i].curr = NULL;
+	}	
+
+	if (DEBUG) printf("\n\n");
+
+	// Loop through Symbol Table to gather Defined Types
+	for (i = 0; i < symbolCount; i++) {
+		index = symbol_table[i].typeNum - 10;
+
+		if (!defined_type(index)) {
+			if (DEBUG) printf("TYPE INSERTED: ID (%s)\n", symbol_table[i].id);
+			types[index].id = symbol_table[i].id;
+		}
+	}		
+
+	// Loop through Symbol Table and Add Explicitly Defined Types
+	for (i = 0; i < symbolCount; i++) {
+		index = symbol_table[i].typeNum - 10;
+
+		if ((symbol_table[i].declType == EXPLICIT) & (symbol_table[i].form == TYPE_DECL) & (strcmp(types[index].id, symbol_table[i].id) != 0)) {
+			if (DEBUG) printf("INSERTING: ID (%s) TYPENUM (%d)\n", symbol_table[i].id, symbol_table[i].typeNum);
+			types[index].head = add_to_list(types[index].head, symbol_table[i].id);
+		}
+	}
+
+	// Loop through Symbol Table and Add Implicityl Defined Types
+	for (i = 0; i < symbolCount; i++) {
+		index = symbol_table[i].typeNum - 10;
+
+		if ((symbol_table[i].declType == IMPLICIT) & (symbol_table[i].form == TYPE_DECL) & (strcmp(types[index].id, symbol_table[i].id) != 0)) {
+			if (DEBUG) printf("INSERTING: ID (%s) TYPENUM (%d)\n", symbol_table[i].id, symbol_table[i].typeNum);
+			types[index].head = add_to_list(types[index].head, symbol_table[i].id);
+		}
+	}
+
+	// Loop through Symbol Table and Add Variables
+	for (i = 0; i < symbolCount; i++) {
+		index = symbol_table[i].typeNum - 10;
+		
+		if ((symbol_table[i].form == VAR_DECL) & (strcmp(types[index].id, symbol_table[i].id) != 0)) {
+			if (DEBUG) printf("INSERTING: ID (%s) TYPENUM (%d)\n", symbol_table[i].id, symbol_table[i].typeNum);
+			types[index].head = add_to_list(types[index].head, symbol_table[i].id);
+		}
+	}
+
+	// Loop through Types and Print Symbols
+	for (i = 0; i < (nextTypeNum - 10); i++) {
+		if (types[i].head != NULL) {
+			printf("%s : ", types[i].id);
+			
+			struct symbolNode* symbol = types[i].head;
+
+			do {
+				printf("%s ", symbol->id);
+				symbol = symbol->next;
+			} while (symbol != NULL);
+
+			printf("#\n");
+		} else {
+			if (DEBUG) printf("SKIPPING: No Symbols for Type (%s)\n", types[i].id);
+		}
 	}
 
 	return;
@@ -1531,4 +1617,5 @@ main() {
 	if (DEBUG) print_parse_tree(parseTree);
 	if (DEBUG) printf("\nSUCCESSFULLY PARSED INPUT!\n\n");
 	if (DEBUG) print_symbol_table();
+	print_types();
 }

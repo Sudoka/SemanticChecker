@@ -49,4 +49,6 @@ int unify(int t1, int t2);
 //--------------------------//
 // Semantic Print Functions //
 //--------------------------//
+bool defined_type(int index);
 void print_symbol_table();
+void print_types();

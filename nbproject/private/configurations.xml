@@ -4,6 +4,7 @@
     <df root="." name="0">
       <df name="tests">
       </df>
+      <in>printlist.h</in>
       <in>semantic.c</in>
       <in>syntax.h</in>
       <in>typecheck.h</in>
